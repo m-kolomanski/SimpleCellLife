@@ -1,3 +1,5 @@
+import datetime
+
 from SimpleCellLife import SimpleCellLife
 
 if __name__ == "__main__":
@@ -5,5 +7,4 @@ if __name__ == "__main__":
                          map_y = 10,
                          mutation_rate = 10,
                          sleep_time = 1)
-
     sim.startSimulation()
