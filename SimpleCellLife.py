@@ -3,7 +3,7 @@ import random
 import time
 from random import randint
 from Tile import Tile
-from Owner import Owner
+from Cell import Cell
 
 from os import system, name
 # clear terminal funtion #
@@ -35,8 +35,8 @@ class SimpleCellLife:
         self.map_y = map_y
         self.map = []
 
-        # owners dict #
-        self.owners_dict = {}
+        # cells dict #
+        self.cells_dict = {}
 
         # evolution atributes #
         self.mutation_rate = mutation_rate
@@ -47,7 +47,7 @@ class SimpleCellLife:
 
     def mapGeneration(self):
         """Generates map"""
-        game_tiles = []
+        map_tiles = []
 
         for a in range(self.map_x):
             x_temp = []
@@ -56,35 +56,35 @@ class SimpleCellLife:
                 x_temp.append(Tile(x_pos = a,
                                    y_pos = b))
 
-            game_tiles.append(x_temp)
+            map_tiles.append(x_temp)
 
-        self.map = game_tiles
+        self.map = map_tiles
 
     def printMap(self):
         """Prints map"""
         for i in range(len(self.map)):
             map_row = []
             for j in range(len(self.map[i])):
-                map_row.append(self.map[i][j].owner)
+                map_row.append(self.map[i][j].inhabitant)
             print(map_row)
 
     def splitCell(self):
         """Splits existing cells"""
-        for owner in self.owners_dict.keys():
-            owners_local = copy.deepcopy(self.owners_dict)
-            if owner != '0':
-                for tile in owners_local[owner].owned_tiles:
+        for inhabitant in self.cells_dict.keys():
+            inhabitants_local = copy.deepcopy(self.cells_dict)
+            if inhabitant != '0':
+                for tile in inhabitants_local[inhabitant].inhabited_tiles:
                     x = tile[0]
                     y = tile[1]
                     target = random.choice([[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]])
 
-                    if -1 not in target and 10 not in target and target not in self.owners_dict[owner].owned_tiles: ## todo: add flexible bounds detection
-                        ## remove current owner ##
-                        self.owners_dict[str(self.map[target[0]][target[1]].owner)].owned_tiles.remove(target)
-                        ## take ownership of the tile ##
-                        self.map[target[0]][target[1]].owner = int(owner)
+                    if -1 not in target and 10 not in target and target not in self.cells_dict[inhabitant].inhabited_tiles: ## todo: add flexible bounds detection
+                        ## remove current inhabitant ##
+                        self.cells_dict[str(self.map[target[0]][target[1]].inhabitant)].inhabited_tiles.remove(target)
+                        ## take inhabitantship of the tile ##
+                        self.map[target[0]][target[1]].inhabitant = int(inhabitant)
                         ## add owned tile ##
-                        self.owners_dict[owner].owned_tiles.append(target)
+                        self.cells_dict[inhabitant].inhabited_tiles.append(target)
 
 
     def mutateCell(self):
@@ -93,37 +93,37 @@ class SimpleCellLife:
 
         for x in range(len(map_local)):
             for y in range(len(map_local[x])):
-                if map_local[x][y].owner != 0:
+                if map_local[x][y].inhabitant != 0:
                     if randint(1, 100) in range(1, self.mutation_rate):
-                        self.owners_dict[str(self.map[x][y].owner)].owned_tiles.remove([x, y])
+                        self.cells_dict[str(self.map[x][y].inhabitant)].inhabited_tiles.remove([x, y])
 
-                        if str(self.map[x][y].owner + 1) in self.owners_dict.keys():
-                            self.map[x][y].owner += 1
-                            self.owners_dict[str(self.map[x][y].owner)].owned_tiles.append([x, y])
+                        if str(self.map[x][y].inhabitant + 1) in self.cells_dict.keys():
+                            self.map[x][y].inhabitant += 1
+                            self.cells_dict[str(self.map[x][y].inhabitant)].inhabited_tiles.append([x, y])
                         else:
-                            self.owners_dict[str(len(self.owners_dict))] = Owner(name = len(self.owners_dict))
-                            self.owners_dict[str(len(self.owners_dict) - 1)].owned_tiles.append([x, y])
-                            self.map[x][y].owner = len(self.owners_dict) - 1
+                            self.cells_dict[str(len(self.cells_dict))] = Cell(species = len(self.cells_dict))
+                            self.cells_dict[str(len(self.cells_dict) - 1)].inhabited_tiles.append([x, y])
+                            self.map[x][y].inhabitant = len(self.cells_dict) - 1
 
     def printStats(self):
-        """Print simple statistics about tile ownership"""
+        """Print simple statistics about tile inhabitantship"""
 
-        for owner in self.owners_dict.keys():
-            if len(self.owners_dict[owner].owned_tiles) != 0:
-                print("Tiles owned by " + str(owner) + ": " + str(len(self.owners_dict[owner].owned_tiles)))
+        for inhabitant in self.cells_dict.keys():
+            if len(self.cells_dict[inhabitant].inhabited_tiles) != 0:
+                print("Tiles owned by " + str(inhabitant) + ": " + str(len(self.cells_dict[inhabitant].inhabited_tiles)))
 
 
     def startSimulation(self):
         """Starts simulation"""
         ## setup initial map ##
         self.mapGeneration()
-        self.owners_dict[str(0)] = Owner(name = 0)
-        self.owners_dict[str(1)] = Owner(name = 1)
-        self.map[1][1].owner = 1
+        self.cells_dict[str(0)] = Cell(species = 0)
+        self.cells_dict[str(1)] = Cell(species = 1)
+        self.map[1][1].inhabitant = 1
 
         for x in range(len(self.map)):
             for y in range(len(self.map[x])):
-                self.owners_dict[str(self.map[x][y].owner)].owned_tiles.append([x, y])
+                self.cells_dict[str(self.map[x][y].inhabitant)].inhabited_tiles.append([x, y])
 
         turns = 0
         print('Turn:' + str(turns))
