@@ -30,7 +30,7 @@ class SimpleCellLife:
                  sleep_time = 2,
                  print_stats = False):
 
-        # map atributes #
+        # map attributes #
         self.map_x = map_x
         self.map_y = map_y
         self.map = []
@@ -38,10 +38,10 @@ class SimpleCellLife:
         # cells dict #
         self.cells_dict = {}
 
-        # evolution atributes #
+        # evolution attributes #
         self.mutation_rate = mutation_rate
 
-        # system atributes #
+        # system attributes #
         self.sleep_time = sleep_time
         self.print_stats = print_stats
 
@@ -65,8 +65,13 @@ class SimpleCellLife:
         for i in range(len(self.map)):
             map_row = []
             for j in range(len(self.map[i])):
-                map_row.append(self.map[i][j].inhabitant)
-            print(map_row)
+                color = self.cells_dict[str(self.map[i][j].inhabitant)].color
+                colored_cell = "\x1b[38;2;" + str(color[0]) + ";" + str(color[1]) + ";" + str(color[2]) + "m" +\
+                               str(self.map[i][j].inhabitant) + "\x1b[0m"
+                map_row.append(colored_cell)
+                map_row_joined = " ".join(map_row)
+                #map_row.append(self.map[i][j].inhabitant)
+            print(map_row_joined)
 
     def splitCell(self):
         """Splits existing cells"""
@@ -98,10 +103,14 @@ class SimpleCellLife:
                         self.cells_dict[str(self.map[x][y].inhabitant)].inhabited_tiles.remove([x, y])
 
                         if str(self.map[x][y].inhabitant + 1) in self.cells_dict.keys():
+                            # evolve into already existing species #
                             self.map[x][y].inhabitant += 1
                             self.cells_dict[str(self.map[x][y].inhabitant)].inhabited_tiles.append([x, y])
                         else:
-                            self.cells_dict[str(len(self.cells_dict))] = Cell(species = len(self.cells_dict))
+                            # declare completely new species #
+                            self.cells_dict[str(len(self.cells_dict))] = Cell(species = len(self.cells_dict),
+                                                                              rgb_genes = copy.deepcopy(self.cells_dict[str(len(self.cells_dict) - 1)].color))
+                            self.cells_dict[str(len(self.cells_dict) - 1)].mutateRGB()
                             self.cells_dict[str(len(self.cells_dict) - 1)].inhabited_tiles.append([x, y])
                             self.map[x][y].inhabitant = len(self.cells_dict) - 1
 
@@ -110,15 +119,18 @@ class SimpleCellLife:
 
         for inhabitant in self.cells_dict.keys():
             if len(self.cells_dict[inhabitant].inhabited_tiles) != 0:
-                print("Tiles owned by " + str(inhabitant) + ": " + str(len(self.cells_dict[inhabitant].inhabited_tiles)))
+                print("Tiles owned by " + str(inhabitant) + ": " + str(len(self.cells_dict[inhabitant].inhabited_tiles)) +
+                      " with color:", self.cells_dict[str(inhabitant)].color)
 
 
     def startSimulation(self):
         """Starts simulation"""
         ## setup initial map ##
         self.mapGeneration()
-        self.cells_dict[str(0)] = Cell(species = 0)
-        self.cells_dict[str(1)] = Cell(species = 1)
+        self.cells_dict[str(0)] = Cell(species = 0,
+                                       rgb_genes = [0, 0, 0])
+        self.cells_dict[str(1)] = Cell(species = 1,
+                                       rgb_genes = [255, 255, 255])
         self.map[1][1].inhabitant = 1
 
         for x in range(len(self.map)):
