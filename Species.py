@@ -18,14 +18,14 @@ class Species:
     def getGenes(self):
         return tuple(self.genes)
     
-    def getMove(self, current_x, current_y):
+    def getMove(self, current_x, current_y, offset_x, offset_y):
         move = randint(0,3)
 
         match move:
-            case 0: current_x += 100
-            case 1: current_x -= 100
-            case 2: current_y += 100
-            case 3: current_y -= 100
+            case 0: current_x += offset_x
+            case 1: current_x -= offset_x
+            case 2: current_y += offset_y
+            case 3: current_y -= offset_y
         
         return (current_x, current_y)
 

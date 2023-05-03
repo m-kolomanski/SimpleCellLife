@@ -10,10 +10,12 @@ class Tile:
         inhabitant - tile inhabitant (currently just number)
 
     """
-    def __init__(self, canvas, pos_x, pos_y):
+    def __init__(self, canvas, pos_x, pos_y, width, height):
         self.canvas = canvas
         self.pos_x = pos_x
         self.pos_y = pos_y
+        self.width = width
+        self.height = height
         self.inhabitant = None
 
         self.initialized = False
@@ -31,8 +33,8 @@ class Tile:
         if not self.initialized:
             self.id = self.canvas.create_rectangle(self.pos_x,
                                                    self.pos_y,
-                                                   self.pos_x + 100,
-                                                   self.pos_y + 100,
+                                                   self.pos_x + self.width,
+                                                   self.pos_y + self.height,
                                                    fill = tile_color)
             self.text_id = self.canvas.create_text(self.pos_x + 20,
                                                    self.pos_y + 20,

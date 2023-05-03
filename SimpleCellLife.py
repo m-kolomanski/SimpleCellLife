@@ -29,6 +29,7 @@ class SimpleCellLife:
         
         # input widgets #
         self.input_widgets = tk.Frame(master = self.window)
+
         tk.Label(master = self.input_widgets, text = "Input widgets").grid(row=1,column=1)
 
         # Map parameters #
@@ -38,8 +39,8 @@ class SimpleCellLife:
         self.map_y.grid(row=4,column=1)
 
         # sleep time #
-        self.sleep_time = tk.Entry(master = self.input_widgets)
-        self.sleep_time.grid(row=5,column=1)
+        self.tick_rate = tk.Entry(master = self.input_widgets)
+        self.tick_rate.grid(row=5,column=1)
 
         # mutation rate #
         self.mutation_rate = tk.Entry(master = self.input_widgets)
@@ -80,7 +81,8 @@ class SimpleCellLife:
                 continue
             
             ### EXPAND ###
-            move = tile_inhabitants[tile].getMove(self.tiles[tile].pos_x, self.tiles[tile].pos_y)
+            move = tile_inhabitants[tile].getMove(self.tiles[tile].pos_x, self.tiles[tile].pos_y,
+                                                  self.tiles[tile].width, self.tiles[tile].height)
 
             for new_tile in self.tiles:
                 if new_tile.pos_x == move[0] and new_tile.pos_y == move[1]:
@@ -107,7 +109,7 @@ class SimpleCellLife:
         ## do other stuff
 
         ## repeat
-        self.canvas.after(int(self.sleep_time.get()), self.processTurn)
+        self.canvas.after(int(self.tick_rate.get()), self.processTurn)
         
             
     def startSimulation(self):
@@ -118,14 +120,20 @@ class SimpleCellLife:
         current_x = 0
         current_y = 0
 
+        map_x = int(self.map_x.get())
+        map_y = int(self.map_y.get())
+
+        offset_x = 1000 / map_x
+        offset_y = 1000 / map_y
+
         while True:
-            self.tiles.append(Tile(self.canvas, current_x, current_y))
+            self.tiles.append(Tile(self.canvas, current_x, current_y, offset_x, offset_y))
 
-            current_x += 100
+            current_x += offset_x
 
-            if current_x >= int(self.map_x.get()) * 100:
-                current_y += 100
-                if current_y >= int(self.map_y.get()) * 100:
+            if current_x >= 1000:
+                current_y += offset_y
+                if current_y >= 1000:
                     break
                 current_x = 0
 
