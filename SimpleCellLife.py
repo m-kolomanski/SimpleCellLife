@@ -15,6 +15,8 @@ class SimpleCellLife:
         # cells dict #
         self.species_dict = {}
 
+        self.running = False
+
         self.setupWindow()
 
     def setupWindow(self):
@@ -33,23 +35,32 @@ class SimpleCellLife:
         tk.Label(master = self.input_widgets, text = "Input widgets").grid(row=1,column=1)
 
         # Map parameters #
+        tk.Label(master = self.input_widgets, text = "Map X").grid(row=2,column=1)
         self.map_x = tk.Entry(master = self.input_widgets)
+        self.map_x.insert(0, '15')
         self.map_x.grid(row=3,column=1)
-        self.map_y = tk.Entry(master = self.input_widgets)
-        self.map_y.grid(row=4,column=1)
 
-        # sleep time #
+        tk.Label(master = self.input_widgets, text = "Map Y").grid(row=4,column=1)
+        self.map_y = tk.Entry(master = self.input_widgets)
+        self.map_y.insert(0, '15')
+        self.map_y.grid(row=5,column=1)
+
+        # tick rate #
+        tk.Label(master=self.input_widgets, text = "Tick rate").grid(row=6,column=1)
         self.tick_rate = tk.Entry(master = self.input_widgets)
-        self.tick_rate.grid(row=5,column=1)
+        self.tick_rate.insert(0, '200')
+        self.tick_rate.grid(row=7,column=1)
 
         # mutation rate #
+        tk.Label(master=self.input_widgets, text = "Mutation rate").grid(row=8,column=1)
         self.mutation_rate = tk.Entry(master = self.input_widgets)
-        self.mutation_rate.grid(row=6,column=1)
+        self.mutation_rate.insert(0, '10')
+        self.mutation_rate.grid(row=9,column=1)
 
         # start sim button #
         self.start_sim_btn = tk.Button(master=self.input_widgets, text = "Start simulation")
         self.start_sim_btn.bind('<Button-1>', lambda e:self.startSimulation())
-        self.start_sim_btn.grid(row=2,column=1)
+        self.start_sim_btn.grid(row=10,column=1)
 
         self.input_widgets.grid(row=1,column=2)
 
@@ -74,44 +85,53 @@ class SimpleCellLife:
         # tiles list is not possible. Hence weird way of iterating over tiles and their inhibitants.
         # TODO: Optimize
 
-        tile_inhabitants = [tile.inhabitant for tile in self.tiles]
-        for tile in range(len(self.tiles)):
+        if self.running:
+            tile_inhabitants = [tile.inhabitant for tile in self.tiles]
+            for tile in range(len(self.tiles)):
 
-            if tile_inhabitants[tile] == None:
-                continue
+                if tile_inhabitants[tile] == None:
+                    continue
+                
+                ### EXPAND ###
+                move = tile_inhabitants[tile].getMove(self.tiles[tile].pos_x, self.tiles[tile].pos_y,
+                                                    self.tiles[tile].width, self.tiles[tile].height)
+
+                for new_tile in self.tiles:
+                    if new_tile.pos_x == move[0] and new_tile.pos_y == move[1]:
+                        new_tile.changeInhabitant(tile_inhabitants[tile])
+                        break
+
+                ### MUTATE ###
+                if randint(1,100) <= int(self.mutation_rate.get()):
+
+                    # evolve into existing #
+                    if str(self.tiles[tile].inhabitant.species_id + 1) in self.species_dict.keys():
+                        self.tiles[tile].changeInhabitant(self.species_dict[str(self.tiles[tile].inhabitant.species_id + 1)])
+
+                    # declare new species #
+                    else:
+                        self.createNewSpecies(genes = 'mutate',
+                                            rgb_genes = self.tiles[tile].inhabitant.getGenes())
+                        self.tiles[tile].changeInhabitant(self.species_dict[str(len(self.species_dict) - 1)])   
             
-            ### EXPAND ###
-            move = tile_inhabitants[tile].getMove(self.tiles[tile].pos_x, self.tiles[tile].pos_y,
-                                                  self.tiles[tile].width, self.tiles[tile].height)
+            ### DRAW TILES ###
+            for tile in self.tiles:
+                tile.draw()
 
-            for new_tile in self.tiles:
-                if new_tile.pos_x == move[0] and new_tile.pos_y == move[1]:
-                    new_tile.changeInhabitant(tile_inhabitants[tile])
-                    break
-
-            ### MUTATE ###
-            if randint(1,100) <= int(self.mutation_rate.get()):
-
-                # evolve into existing #
-                if str(self.tiles[tile].inhabitant.species_id + 1) in self.species_dict.keys():
-                    self.tiles[tile].changeInhabitant(self.species_dict[str(self.tiles[tile].inhabitant.species_id + 1)])
-
-                # declare new species #
-                else:
-                    self.createNewSpecies(genes = 'mutate',
-                                        rgb_genes = self.tiles[tile].inhabitant.getGenes())
-                    self.tiles[tile].changeInhabitant(self.species_dict[str(len(self.species_dict) - 1)])   
-        
-        ### DRAW TILES ###
-        for tile in self.tiles:
-            tile.draw()
-
-        ## do other stuff
+            ## do other stuff
 
         ## repeat
         self.canvas.after(int(self.tick_rate.get()), self.processTurn)
         
             
+    def pauseSim(self):
+        if self.running:
+            self.running = False
+            self.pause_sim_btn.config(text = "Reasume")
+        else:
+            self.running = True
+            self.pause_sim_btn.config(text = "Reasume")
+    
     def startSimulation(self):
         """Starts simulation"""
         ## show window ##
@@ -148,6 +168,13 @@ class SimpleCellLife:
         for tile in self.tiles:
             tile.draw()
 
+        self.start_sim_btn.destroy()
+        self.pause_sim_btn = tk.Button(master=self.input_widgets, text = "Pause")
+        self.pause_sim_btn.bind("<Button-1>", lambda e:self.pauseSim())
+        self.pause_sim_btn.grid(row=10,column=1)
+
+        
+        self.running = True
         self.processTurn()
         
 if __name__ == "__main__":
