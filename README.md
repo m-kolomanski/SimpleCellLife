@@ -1,6 +1,21 @@
 Simple cell life simulation. This time Imma do it for real.<br>
 Not ready for any release yet, everything is barely taped together.
 
+<h1>Usage</h1>
+To run, clone the repository and run:
+```
+python SimpleCellLife.py
+```
+In the menu you need to provide:
+<ul>
+<li>Map X dimension;</li>
+<li>Map Y dimension;</li>
+<li>Tick rate in ms;</li>
+<li>Mutation rate in % (min: 0, max: 100).</li>
+</ul>
+Then all is left to do is to press the <b>Start simulation</b> button. You can change tick and mutation rate while the simulation is running.
+
+<h1>Timeline</h1>
 <h2>23-05-03</h2>
 Reworked the whole program, added crude support for Tkinter interface.
 <h2>22-04-20</h2>
