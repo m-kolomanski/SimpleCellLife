@@ -1,156 +1,146 @@
-import copy
-import random
-import time
 from random import randint
 from Tile import Tile
-from Cell import Cell
-
-from os import system, name
-# clear terminal funtion #
-def clearTerminal():
-    if name == 'nt':
-        _ = system('cls')
-    else:
-        _ = system('clear')
+from Species import Species
+import tkinter as tk
 
 class SimpleCellLife:
     """
     Simulation class
-
-    Attributes:
-        map_x, map_y - map dimensions (default 10)
-        mutation_rate - mutation rate in %, 0 < int < 100 (default 20)
-        sleep_time - sleep time between turns (default 2)
-        print_stats - whether to print stats about the simulation (default False)
-
     """
 
-    def __init__(self, map_x = 10, map_y = 10,
-                 mutation_rate = 20,
-                 sleep_time = 2,
-                 print_stats = False):
-
-        # map attributes #
-        self.map_x = map_x
-        self.map_y = map_y
-        self.map = []
+    def __init__(self):
+        # tiles #
+        self.tiles = []
 
         # cells dict #
-        self.cells_dict = {}
+        self.species_dict = {}
 
-        # evolution attributes #
-        self.mutation_rate = mutation_rate
+        self.setupWindow()
 
-        # system attributes #
-        self.sleep_time = sleep_time
-        self.print_stats = print_stats
+    def setupWindow(self):
+        self.window = tk.Tk()
 
-    def mapGeneration(self):
-        """Generates map"""
-        map_tiles = []
+        # canvas #
+        self.canvas = tk.Canvas(self.window,
+                                width = 1000,
+                                height = 1000,
+                                bd = 0, highlightthickness=0)
+        self.canvas.grid(row=1,column=1)
+        
+        # input widgets #
+        self.input_widgets = tk.Frame(master = self.window)
+        tk.Label(master = self.input_widgets, text = "Input widgets").grid(row=1,column=1)
 
-        for a in range(self.map_x):
-            x_temp = []
-            for b in range(self.map_y):
+        # Map parameters #
+        self.map_x = tk.Entry(master = self.input_widgets)
+        self.map_x.grid(row=3,column=1)
+        self.map_y = tk.Entry(master = self.input_widgets)
+        self.map_y.grid(row=4,column=1)
 
-                x_temp.append(Tile(x_pos = a,
-                                   y_pos = b))
+        # sleep time #
+        self.sleep_time = tk.Entry(master = self.input_widgets)
+        self.sleep_time.grid(row=5,column=1)
 
-            map_tiles.append(x_temp)
+        # mutation rate #
+        self.mutation_rate = tk.Entry(master = self.input_widgets)
+        self.mutation_rate.grid(row=6,column=1)
 
-        self.map = map_tiles
+        # start sim button #
+        self.start_sim_btn = tk.Button(master=self.input_widgets, text = "Start simulation")
+        self.start_sim_btn.bind('<Button-1>', lambda e:self.startSimulation())
+        self.start_sim_btn.grid(row=2,column=1)
 
-    def printMap(self):
-        """Prints map"""
-        for i in range(len(self.map)):
-            map_row = []
-            for j in range(len(self.map[i])):
-                color = self.cells_dict[str(self.map[i][j].inhabitant)].color
-                colored_cell = "\x1b[38;2;" + str(color[0]) + ";" + str(color[1]) + ";" + str(color[2]) + "m" +\
-                               str(self.map[i][j].inhabitant) + "\x1b[0m"
-                map_row.append(colored_cell)
-                map_row_joined = " ".join(map_row)
-                #map_row.append(self.map[i][j].inhabitant)
-            print(map_row_joined)
+        self.input_widgets.grid(row=1,column=2)
 
-    def splitCell(self):
-        """Splits existing cells"""
-        for inhabitant in self.cells_dict.keys():
-            inhabitants_local = copy.deepcopy(self.cells_dict)
-            if inhabitant != '0':
-                for tile in inhabitants_local[inhabitant].inhabited_tiles:
-                    x = tile[0]
-                    y = tile[1]
-                    target = random.choice([[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]])
+        self.window.mainloop()
 
-                    if -1 not in target and 10 not in target and target not in self.cells_dict[inhabitant].inhabited_tiles: ## todo: add flexible bounds detection
-                        ## remove current inhabitant ##
-                        self.cells_dict[str(self.map[target[0]][target[1]].inhabitant)].inhabited_tiles.remove(target)
-                        ## take inhabitantship of the tile ##
-                        self.map[target[0]][target[1]].inhabitant = int(inhabitant)
-                        ## add owned tile ##
-                        self.cells_dict[inhabitant].inhabited_tiles.append(target)
+    def createNewSpecies(self, genes = None, rgb_genes = (0,0,0)):
+        species_id = len(self.species_dict)
 
+        if genes == None:
+            pass
+        elif genes == 'mutate':
+            new_genes = list(rgb_genes)
+            new_genes[randint(0,2)] -= 10
+        elif genes == 'random':
+            rgb_genes = (randint(0,255),randint(0,255),randint(0,255))
 
-    def mutateCell(self):
-        """Mutates existing cells"""
-        map_local = copy.deepcopy(self.map)
+        self.species_dict[str(species_id)] = Species(species_id = species_id,
+                                                    rgb_genes = new_genes)
 
-        for x in range(len(map_local)):
-            for y in range(len(map_local[x])):
-                if map_local[x][y].inhabitant != 0:
-                    if randint(1, 100) in range(1, self.mutation_rate):
-                        self.cells_dict[str(self.map[x][y].inhabitant)].inhabited_tiles.remove([x, y])
+    def processTurn(self):
+        # Tkinter does not allow to make deepcopies of its objects, therefore making a local copy of
+        # tiles list is not possible. Hence weird way of iterating over tiles and their inhibitants.
+        # TODO: Optimize
 
-                        if str(self.map[x][y].inhabitant + 1) in self.cells_dict.keys():
-                            # evolve into already existing species #
-                            self.map[x][y].inhabitant += 1
-                            self.cells_dict[str(self.map[x][y].inhabitant)].inhabited_tiles.append([x, y])
-                        else:
-                            # declare completely new species #
-                            self.cells_dict[str(len(self.cells_dict))] = Cell(species = len(self.cells_dict),
-                                                                              rgb_genes = copy.deepcopy(self.cells_dict[str(len(self.cells_dict) - 1)].color))
-                            self.cells_dict[str(len(self.cells_dict) - 1)].mutateRGB()
-                            self.cells_dict[str(len(self.cells_dict) - 1)].inhabited_tiles.append([x, y])
-                            self.map[x][y].inhabitant = len(self.cells_dict) - 1
+        tile_inhabitants = [tile.inhabitant for tile in self.tiles]
+        for tile in range(len(self.tiles)):
 
-    def printStats(self):
-        """Print simple statistics about tile inhabitantship"""
+            if tile_inhabitants[tile] == None:
+                continue
+            
+            ### EXPAND ###
+            move = tile_inhabitants[tile].getMove(self.tiles[tile].pos_x, self.tiles[tile].pos_y)
 
-        for inhabitant in self.cells_dict.keys():
-            if len(self.cells_dict[inhabitant].inhabited_tiles) != 0:
-                print("Tiles owned by " + str(inhabitant) + ": " + str(len(self.cells_dict[inhabitant].inhabited_tiles)) +
-                      " with color:", self.cells_dict[str(inhabitant)].color)
+            for new_tile in self.tiles:
+                if new_tile.pos_x == move[0] and new_tile.pos_y == move[1]:
+                    new_tile.changeInhabitant(tile_inhabitants[tile])
+                    break
 
+            ### MUTATE ###
+            if randint(1,100) <= int(self.mutation_rate.get()):
 
+                # evolve into existing #
+                if str(self.tiles[tile].inhabitant.species_id + 1) in self.species_dict.keys():
+                    self.tiles[tile].changeInhabitant(self.species_dict[str(self.tiles[tile].inhabitant.species_id + 1)])
+
+                # declare new species #
+                else:
+                    self.createNewSpecies(genes = 'mutate',
+                                        rgb_genes = self.tiles[tile].inhabitant.getGenes())
+                    self.tiles[tile].changeInhabitant(self.species_dict[str(len(self.species_dict) - 1)])   
+        
+        ### DRAW TILES ###
+        for tile in self.tiles:
+            tile.draw()
+
+        ## do other stuff
+
+        ## repeat
+        self.canvas.after(int(self.sleep_time.get()), self.processTurn)
+        
+            
     def startSimulation(self):
         """Starts simulation"""
-        ## setup initial map ##
-        self.mapGeneration()
-        self.cells_dict[str(0)] = Cell(species = 0,
-                                       rgb_genes = [0, 0, 0])
-        self.cells_dict[str(1)] = Cell(species = 1,
-                                       rgb_genes = [255, 255, 255])
-        self.map[1][1].inhabitant = 1
-
-        for x in range(len(self.map)):
-            for y in range(len(self.map[x])):
-                self.cells_dict[str(self.map[x][y].inhabitant)].inhabited_tiles.append([x, y])
-
-        turns = 0
-        print('Turn:' + str(turns))
-        self.printMap()
+        ## show window ##
+        #self.setupWindow()
+        
+        current_x = 0
+        current_y = 0
 
         while True:
-            time.sleep(self.sleep_time)
+            self.tiles.append(Tile(self.canvas, current_x, current_y))
 
-            self.splitCell()
-            self.mutateCell()
+            current_x += 100
 
-            clearTerminal()
+            if current_x >= int(self.map_x.get()) * 100:
+                current_y += 100
+                if current_y >= int(self.map_y.get()) * 100:
+                    break
+                current_x = 0
 
-            turns += 1
-            print('Turn:' + str(turns))
-            self.printMap()
-            if (self.print_stats):
-                self.printStats()
+        self.species_dict[str(0)] = Species(species_id = 0,
+                                          rgb_genes = [0,0,0])
+        
+        self.species_dict[str(1)] = Species(species_id = 1,
+                                          rgb_genes = [255,255,255])
+        
+        self.tiles[0].changeInhabitant(self.species_dict[str(1)])
+
+        for tile in self.tiles:
+            tile.draw()
+
+        self.processTurn()
+        
+if __name__ == "__main__":
+    SimpleCellLife()

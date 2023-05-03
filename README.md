@@ -1,5 +1,8 @@
-Simple cell life simulation. This time Imma do it for real.
+Simple cell life simulation. This time Imma do it for real.<br>
+Not ready for any release yet, everything is barely taped together.
 
+<h2>23-05-03</h2>
+Reworked the whole program, added crude support for Tkinter interface.
 <h2>22-04-20</h2>
 Added RGB genes that denote first possible cell phenotype - its color. Genes are inherited when cells evolve and mutate in random direction. Additionally, map is now printed with a help of ANSI colors, helping to visualize the map.
 <h2>22-04-19</h2>

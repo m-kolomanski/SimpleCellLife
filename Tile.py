@@ -1,3 +1,6 @@
+import tkinter as tk
+from random import randint
+
 class Tile:
     """
     Tile class
@@ -7,7 +10,45 @@ class Tile:
         inhabitant - tile inhabitant (currently just number)
 
     """
-    def __init__(self, x_pos, y_pos):
-        self.x_pos = x_pos
-        self.y_pos = y_pos
-        self.inhabitant = 0
+    def __init__(self, canvas, pos_x, pos_y):
+        self.canvas = canvas
+        self.pos_x = pos_x
+        self.pos_y = pos_y
+        self.inhabitant = None
+
+        self.initialized = False
+
+    def draw(self):
+        if self.inhabitant == None:
+            tile_color = "black"
+            species_id = "None"
+            species_genes = ""
+        else:
+            tile_color = "#%02x%02x%02x" % self.inhabitant.getGenes()
+            species_id = str(self.inhabitant.species_id)
+            species_genes = str(self.inhabitant.getGenes())
+
+        if not self.initialized:
+            self.id = self.canvas.create_rectangle(self.pos_x,
+                                                   self.pos_y,
+                                                   self.pos_x + 100,
+                                                   self.pos_y + 100,
+                                                   fill = tile_color)
+            self.text_id = self.canvas.create_text(self.pos_x + 20,
+                                                   self.pos_y + 20,
+                                                   text = species_id)
+            self.text_genes_id = self.canvas.create_text(self.pos_x + 40,
+                                                            self.pos_y + 50,
+                                                            text = species_genes)
+            self.initialized = True
+        else:
+            self.canvas.itemconfig(self.id, fill=tile_color)
+            self.canvas.itemconfig(self.text_id, text=species_id)
+            self.canvas.itemconfig(self.text_genes_id, text=species_genes)
+            
+
+    def changeInhabitant(self, inhabitant):
+        self.inhabitant = inhabitant
+
+
+    
